@@ -148,10 +148,10 @@
     <div v-else-if="filteredItems.length === 0" class="empty">暂无题目</div>
     <div v-else class="list">
       <div v-for="item in filteredItems" :key="item.itemId" class="list-item">
-        <div>
-          <div>{{ promptSummary(item.prompt) }}</div>
+        <RouterLink class="item-main" :to="`/decks/${deckId}/items/${item.itemId}`">
+          <div class="item-title">{{ promptSummary(item.prompt) }}</div>
           <div class="muted">{{ item.type }} · {{ (item.tags || []).join(' / ') || '无标签' }}</div>
-        </div>
+        </RouterLink>
         <div class="item-ops">
           <span class="chip">{{ formatStatus(item) }}</span>
           <button class="btn ghost" type="button" @click="openEdit(item)">编辑</button>
@@ -169,6 +169,7 @@
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { createItem, deleteItem, exportData, getDeck, listItems, updateItem } from '../api'
+import { RouterLink } from 'vue-router'
 import { pushToast } from '../composables/toast'
 import type { Deck, Item } from '../api/types'
 import { renderMarkdown, stripMarkdown } from '../utils/markdown'
@@ -461,6 +462,20 @@ const answerPreview = computed(() => {
   gap: 8px;
   flex-wrap: wrap;
   align-items: center;
+}
+
+.item-main {
+  color: inherit;
+  flex: 1;
+  display: block;
+  min-width: 0;
+}
+
+.item-title {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .markdown-editor {
