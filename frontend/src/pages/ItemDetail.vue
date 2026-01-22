@@ -51,6 +51,19 @@
   </section>
 
   <section v-if="item" class="card">
+    <h3 class="card-title">我的作答</h3>
+    <div v-if="latestReview?.answer" class="markdown-body" v-html="latestAnswerHtml"></div>
+    <div v-else class="muted">暂无复习作答记录。</div>
+    <div v-if="latestReview" class="meta">
+      <span class="chip">评分：{{ latestReview.score }}</span>
+      <span class="chip">时间：{{ formatTime(latestReview.reviewedAt) }}</span>
+      <span v-if="latestReview.reasonTags?.length" class="tag">
+        {{ latestReview.reasonTags.join(' / ') }}
+      </span>
+    </div>
+  </section>
+
+  <section v-if="item" class="card">
     <h3 class="card-title">补充信息</h3>
     <div class="info-grid">
       <div>
@@ -76,13 +89,14 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
-import { getItem, undoItemReview } from '../api'
-import type { Item } from '../api/types'
+import { getItem, getLatestReviewAnswer, undoItemReview } from '../api'
+import type { Item, ReviewAnswer } from '../api/types'
 import { renderMarkdown } from '../utils/markdown'
 import { pushToast } from '../composables/toast'
 
 const route = useRoute()
 const item = ref<Item | null>(null)
+const latestReview = ref<ReviewAnswer | null>(null)
 const loading = ref(false)
 const undoing = ref(false)
 const error = ref('')
@@ -94,6 +108,10 @@ const promptHtml = computed(() => (item.value ? renderMarkdown(item.value.prompt
 const answerHtml = computed(() => {
   if (!item.value?.answerMarkdown) return ''
   return renderMarkdown(item.value.answerMarkdown)
+})
+const latestAnswerHtml = computed(() => {
+  if (!latestReview.value?.answer) return ''
+  return renderMarkdown(latestReview.value.answer)
 })
 
 const formatTime = (value?: string) => {
@@ -107,7 +125,12 @@ const load = async () => {
   loading.value = true
   error.value = ''
   try {
-    item.value = await getItem(itemId.value)
+    const [itemData, reviewData] = await Promise.all([
+      getItem(itemId.value),
+      getLatestReviewAnswer(itemId.value),
+    ])
+    item.value = itemData
+    latestReview.value = reviewData
   } catch (err) {
     error.value = err instanceof Error ? err.message : '加载失败'
   } finally {

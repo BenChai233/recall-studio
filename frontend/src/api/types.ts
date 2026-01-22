@@ -73,6 +73,14 @@ export interface UndoReviewResult {
   reasonTags?: string[]
 }
 
+export interface ReviewAnswer {
+  itemId: string
+  answer?: string
+  score: number
+  reviewedAt?: string
+  reasonTags?: string[]
+}
+
 export interface SessionSummary {
   avgScore: number
   scoreCount: Record<string, number>

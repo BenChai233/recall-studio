@@ -41,4 +41,9 @@ public class ReviewController {
     public ApiResponse<ReviewService.SessionSummary> summary(@PathVariable("sessionId") String sessionId) {
         return ApiResponse.ok(reviewService.getSessionSummary(sessionId));
     }
+
+    @GetMapping("/items/{itemId}/latest")
+    public ApiResponse<ReviewService.ReviewAnswer> latestAnswer(@PathVariable("itemId") String itemId) {
+        return ApiResponse.ok(reviewService.getLatestAnswer(itemId));
+    }
 }

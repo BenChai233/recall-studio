@@ -8,6 +8,7 @@ import type {
   TodayStats,
   ReviewResult,
   UndoReviewResult,
+  ReviewAnswer,
   ReasonDistribution,
   SyncStatus,
 } from './types'
@@ -137,6 +138,10 @@ export function undoItemReview(itemId: string) {
   return request<UndoReviewResult>(`/reviews/items/${itemId}/undo`, {
     method: 'POST',
   })
+}
+
+export function getLatestReviewAnswer(itemId: string) {
+  return request<ReviewAnswer | null>(`/reviews/items/${itemId}/latest`)
 }
 
 export function getSessionSummary(sessionId: string) {

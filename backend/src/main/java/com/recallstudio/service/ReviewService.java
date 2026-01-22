@@ -206,6 +206,15 @@ public class ReviewService {
         return new SessionSummary(avg, scoreCount, wrongItems, nextQuestions);
     }
 
+    public ReviewAnswer getLatestAnswer(String itemId) {
+        Review review = reviewRepository.findLastByItem(itemId);
+        if (review == null) {
+            return null;
+        }
+        return new ReviewAnswer(review.getItemId(), review.getAnswer(), review.getScore(),
+                review.getReviewedAt(), review.getReasonTags());
+    }
+
     private DueType resolveDueType(Item item, OffsetDateTime now) {
         if (item.getSrs() == null) {
             return DueType.NEW;
@@ -294,6 +303,9 @@ public class ReviewService {
     public record ReviewResult(OffsetDateTime nextDue, SrsState srs) {}
 
     public record UndoResult(String itemId, int score, String answer, List<String> reasonTags) {}
+
+    public record ReviewAnswer(String itemId, String answer, int score, OffsetDateTime reviewedAt,
+                               List<String> reasonTags) {}
 
     public record SummaryItem(String itemId, String prompt) {}
 

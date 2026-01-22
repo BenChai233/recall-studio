@@ -27,13 +27,18 @@
         暂无需要处理的题目
       </div>
       <div v-else class="list">
-        <div v-for="item in focusItems" :key="item.itemId" class="list-item">
+        <RouterLink
+          v-for="item in focusItems"
+          :key="item.itemId"
+          class="list-item"
+          :to="`/decks/${item.deckId}/items/${item.itemId}`"
+        >
           <div>
             <div>{{ item.prompt }}</div>
             <div class="muted">{{ item.deckName }}</div>
           </div>
           <span class="chip">{{ item.dueLabel }}</span>
-        </div>
+        </RouterLink>
       </div>
     </div>
     <div class="card soft">
@@ -140,6 +145,7 @@ const focusItems = computed(() => {
       }
       return {
         itemId: item.itemId,
+        deckId: item.deckId,
         prompt: stripMarkdown(item.prompt, 60) || '未填写题干',
         deckName: deckMap.value.get(item.deckId) || '未命名专题',
         dueLabel,
