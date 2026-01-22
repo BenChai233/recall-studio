@@ -13,22 +13,22 @@ public class ReviewController {
     }
 
     @GetMapping("/today")
-    public ReviewService.TodayStats today() {
-        return reviewService.getTodayStats();
+    public ApiResponse<ReviewService.TodayStats> today() {
+        return ApiResponse.ok(reviewService.getTodayStats());
     }
 
     @PostMapping("/sessions")
-    public ReviewService.SessionResponse createSession(@RequestBody ReviewService.SessionRequest request) {
-        return reviewService.createSession(request);
+    public ApiResponse<ReviewService.SessionResponse> createSession(@RequestBody ReviewService.SessionRequest request) {
+        return ApiResponse.ok(reviewService.createSession(request));
     }
 
     @PostMapping
-    public ReviewService.ReviewResult submit(@RequestBody ReviewService.ReviewSubmit request) {
-        return reviewService.submitReview(request);
+    public ApiResponse<ReviewService.ReviewResult> submit(@RequestBody ReviewService.ReviewSubmit request) {
+        return ApiResponse.ok(reviewService.submitReview(request));
     }
 
     @GetMapping("/sessions/{sessionId}/summary")
-    public ReviewService.SessionSummary summary(@PathVariable("sessionId") String sessionId) {
-        return reviewService.getSessionSummary(sessionId);
+    public ApiResponse<ReviewService.SessionSummary> summary(@PathVariable("sessionId") String sessionId) {
+        return ApiResponse.ok(reviewService.getSessionSummary(sessionId));
     }
 }

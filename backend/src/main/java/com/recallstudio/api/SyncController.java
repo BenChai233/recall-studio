@@ -16,12 +16,12 @@ public class SyncController {
     }
 
     @GetMapping("/status")
-    public SyncService.SyncStatus status() {
-        return syncService.getStatus();
+    public ApiResponse<SyncService.SyncStatus> status() {
+        return ApiResponse.ok(syncService.getStatus());
     }
 
     @PostMapping("/snapshot")
-    public SyncService.SyncStatus snapshot() {
-        return syncService.markSnapshot();
+    public ApiResponse<SyncService.SyncStatus> snapshot() {
+        return ApiResponse.ok(syncService.markSnapshot());
     }
 }

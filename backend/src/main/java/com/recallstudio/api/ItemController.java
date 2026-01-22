@@ -19,65 +19,68 @@ public class ItemController {
     }
 
     @GetMapping
-    public List<Item> list(@RequestParam(name = "deckId", required = false) String deckId,
-                           @RequestParam(name = "type", required = false) String type,
-                           @RequestParam(name = "tag", required = false) String tag,
-                           @RequestParam(name = "archived", required = false) Boolean archived,
-                           @RequestParam(name = "dueBefore", required = false) String dueBefore) {
+    public ApiResponse<List<Item>> list(@RequestParam(name = "deckId", required = false) String deckId,
+                                        @RequestParam(name = "type", required = false) String type,
+                                        @RequestParam(name = "tag", required = false) String tag,
+                                        @RequestParam(name = "archived", required = false) Boolean archived,
+                                        @RequestParam(name = "dueBefore", required = false) String dueBefore) {
         OffsetDateTime due = null;
         if (dueBefore != null && !dueBefore.isBlank()) {
             due = OffsetDateTime.parse(dueBefore);
         }
-        return itemService.list(deckId, type, tag, archived, due);
+        return ApiResponse.ok(itemService.list(deckId, type, tag, archived, due));
     }
 
     @GetMapping("/{itemId}")
-    public Item get(@PathVariable("itemId") String itemId) {
-        return itemService.get(itemId);
+    public ApiResponse<Item> get(@PathVariable("itemId") String itemId) {
+        return ApiResponse.ok(itemService.get(itemId));
     }
 
     @PostMapping
-    public Item create(@Valid @RequestBody ItemCreateRequest request) {
+    public ApiResponse<Item> create(@Valid @RequestBody ItemCreateRequest request) {
         Item item = new Item();
         item.setDeckId(request.deckId());
         item.setType(request.type());
         item.setPrompt(request.prompt());
         item.setHint(request.hint());
-        item.setAnswerKey(request.answerKey());
+        item.setAnswerMarkdown(request.answerMarkdown());
         item.setTags(request.tags());
         item.setDifficulty(request.difficulty());
-        return itemService.create(item);
+        return ApiResponse.ok(itemService.create(item));
     }
 
     @PutMapping("/{itemId}")
-    public Item update(@PathVariable("itemId") String itemId, @RequestBody ItemUpdateRequest request) {
+    public ApiResponse<Item> update(@PathVariable("itemId") String itemId, @RequestBody ItemUpdateRequest request) {
         Item updates = new Item();
         updates.setDeckId(request.deckId());
         updates.setType(request.type());
         updates.setPrompt(request.prompt());
         updates.setHint(request.hint());
-        updates.setAnswerKey(request.answerKey());
+        updates.setAnswerMarkdown(request.answerMarkdown());
         updates.setTags(request.tags());
         updates.setDifficulty(request.difficulty());
-        return itemService.update(itemId, updates, request.archived());
+        return ApiResponse.ok(itemService.update(itemId, updates, request.archived()));
     }
 
     @PatchMapping("/{itemId}/archive")
-    public Item archive(@PathVariable("itemId") String itemId, @RequestBody ArchiveRequest request) {
+    public ApiResponse<Item> archive(@PathVariable("itemId") String itemId, @RequestBody ArchiveRequest request) {
         boolean archived = request.archived() != null && request.archived();
-        return itemService.archive(itemId, archived);
+        return ApiResponse.ok(itemService.archive(itemId, archived));
     }
 
     @DeleteMapping("/{itemId}")
-    public void delete(@PathVariable("itemId") String itemId) {
+    public ApiResponse<Void> delete(@PathVariable("itemId") String itemId) {
         itemService.delete(itemId);
+        return ApiResponse.ok(null);
     }
 
     public record ItemCreateRequest(@NotBlank String deckId, @NotBlank String type, @NotBlank String prompt,
-                                    String hint, List<String> answerKey, List<String> tags, String difficulty) {}
+                                    String hint, String answerMarkdown,
+                                    List<String> tags, String difficulty) {}
 
     public record ItemUpdateRequest(String deckId, String type, String prompt, String hint,
-                                    List<String> answerKey, List<String> tags, String difficulty, Boolean archived) {}
+                                    String answerMarkdown,
+                                    List<String> tags, String difficulty, Boolean archived) {}
 
     public record ArchiveRequest(Boolean archived) {}
 }

@@ -37,7 +37,7 @@
 ## 3. 核心概念定义
 
 - **Deck（牌组/题库）**：一组题目的集合，可按领域/章节/主题组织。
-- **Item（题目）**：一道题（prompt）+ 可选标准答案要点（answer/hints）+ 标签/类型/难度。
+- **Item（题目）**：一道题（prompt）+ 可选标准答案要点（Markdown/多行）+ 标签/类型/难度。
 - **Review（复习记录）**：某次对某题的作答与评分（v0 默认 `0/1/2`，映射 Again/Hard/Good；Easy 暂不启用）。
 - **SRS（调度）**：根据历史评分决定下次复习时间。
 
@@ -55,7 +55,7 @@
   - 标签（多选）
   - 难度（可选）
   - 提示（可选，帮助回忆但不等同答案）
-  - 标准要点（可选，建议用 bullet，可复述）
+  - 标准要点（可选，支持 Markdown/多行，可复述）
 
 #### 4.1.2 复习会话（闭卷）
 
@@ -162,7 +162,7 @@ config/settings.json
   - `type`：concept/mechanism/scenario/code/…
   - `prompt`：题干
   - `hint`：提示（可选）
-  - `answerKey`：要点（可选，bullet 数组）
+  - `answerMarkdown`：Markdown 要点（可选，字符串）
   - `tags`：标签数组
   - `difficulty`：难度（可选）
   - `archived`：是否归档

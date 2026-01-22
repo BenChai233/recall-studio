@@ -13,13 +13,13 @@ public class ImportExportController {
     }
 
     @PostMapping("/import")
-    public ImportExportService.ImportResult importData(@RequestBody ImportExportService.ImportRequest request) {
-        return importExportService.importData(request);
+    public ApiResponse<ImportExportService.ImportResult> importData(@RequestBody ImportExportService.ImportRequest request) {
+        return ApiResponse.ok(importExportService.importData(request));
     }
 
     @GetMapping("/export")
-    public ImportExportService.ExportResponse exportData(
+    public ApiResponse<ImportExportService.ExportResponse> exportData(
             @RequestParam(name = "includeReviews", defaultValue = "false") boolean includeReviews) {
-        return importExportService.exportData(includeReviews);
+        return ApiResponse.ok(importExportService.exportData(includeReviews));
     }
 }

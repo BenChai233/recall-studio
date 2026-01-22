@@ -36,8 +36,28 @@
         <input v-model="formHint" placeholder="帮助回忆但不等同答案" />
       </div>
       <div class="field">
-        <label>答案要点（逗号分隔）</label>
-        <input v-model="formAnswerKey" placeholder="要点1, 要点2" />
+        <label>答案要点（Markdown）</label>
+        <div class="markdown-editor">
+          <div class="editor-toolbar">
+            <button class="btn ghost" type="button" @click="wrapSelection('**', '**')">加粗</button>
+            <button class="btn ghost" type="button" @click="wrapSelection('*', '*')">斜体</button>
+            <button class="btn ghost" type="button" @click="wrapSelection('`', '`')">代码</button>
+            <button class="btn ghost" type="button" @click="insertBlock('```\\n', '\\n```')">
+              代码块
+            </button>
+            <button class="btn ghost" type="button" @click="insertLine('- ')">无序列表</button>
+            <button class="btn ghost" type="button" @click="insertLine('1. ')">有序列表</button>
+          </div>
+          <textarea
+            ref="answerTextarea"
+            v-model="formAnswerMarkdown"
+            placeholder="使用 Markdown 编写答案要点，支持多行。"
+          ></textarea>
+        </div>
+        <div class="preview card soft">
+          <div class="muted">预览</div>
+          <div class="markdown-body" v-html="answerPreview"></div>
+        </div>
       </div>
       <div class="field">
         <label>标签（逗号分隔）</label>
@@ -94,11 +114,12 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { createItem, deleteItem, exportData, getDeck, listItems, updateItem } from '../api'
 import { pushToast } from '../composables/toast'
 import type { Deck, Item } from '../api/types'
+import { marked } from 'marked'
 
 const route = useRoute()
 const deck = ref<Deck | null>(null)
@@ -113,9 +134,10 @@ const editingId = ref<string | null>(null)
 const formPrompt = ref('')
 const formType = ref('concept')
 const formHint = ref('')
-const formAnswerKey = ref('')
+const formAnswerMarkdown = ref('')
 const formTags = ref('')
 const formDifficulty = ref('')
+const answerTextarea = ref<HTMLTextAreaElement | null>(null)
 
 const deckId = computed(() => route.params.deckId as string)
 
@@ -143,7 +165,7 @@ const openCreate = () => {
   formPrompt.value = ''
   formType.value = 'concept'
   formHint.value = ''
-  formAnswerKey.value = ''
+  formAnswerMarkdown.value = ''
   formTags.value = ''
   formDifficulty.value = ''
   showForm.value = true
@@ -154,7 +176,7 @@ const openEdit = (item: Item) => {
   formPrompt.value = item.prompt
   formType.value = item.type
   formHint.value = item.hint || ''
-  formAnswerKey.value = (item.answerKey || []).join(', ')
+  formAnswerMarkdown.value = item.answerMarkdown || ''
   formTags.value = (item.tags || []).join(', ')
   formDifficulty.value = item.difficulty || ''
   showForm.value = true
@@ -171,10 +193,7 @@ const submitForm = async () => {
   }
   saving.value = true
   error.value = ''
-  const answerKey = formAnswerKey.value
-    .split(',')
-    .map((v) => v.trim())
-    .filter((v) => v.length > 0)
+  const answerMarkdown = normalizeAnswerMarkdown()
   const tags = formTags.value
     .split(',')
     .map((v) => v.trim())
@@ -186,7 +205,7 @@ const submitForm = async () => {
         type: formType.value,
         prompt: formPrompt.value.trim(),
         hint: formHint.value.trim() || undefined,
-        answerKey,
+        answerMarkdown,
         tags,
         difficulty: formDifficulty.value || undefined,
       })
@@ -197,7 +216,7 @@ const submitForm = async () => {
         type: formType.value,
         prompt: formPrompt.value.trim(),
         hint: formHint.value.trim() || undefined,
-        answerKey,
+        answerMarkdown,
         tags,
         difficulty: formDifficulty.value || undefined,
       })
@@ -270,6 +289,77 @@ const load = async () => {
 
 onMounted(load)
 watch(deckId, load)
+
+const normalizeAnswerMarkdown = () => {
+  const plain = formAnswerMarkdown.value.trim()
+  if (!plain) return undefined
+  return plain
+}
+
+const wrapSelection = (before: string, after: string) => {
+  const el = answerTextarea.value
+  if (!el) return
+  const start = el.selectionStart
+  const end = el.selectionEnd
+  const value = formAnswerMarkdown.value
+  const selected = value.slice(start, end)
+  formAnswerMarkdown.value =
+    value.slice(0, start) + before + selected + after + value.slice(end)
+  nextTick(() => {
+    el.focus()
+    const cursor = start + before.length + selected.length + after.length
+    el.selectionStart = cursor
+    el.selectionEnd = cursor
+  })
+}
+
+const insertBlock = (before: string, after: string) => {
+  const el = answerTextarea.value
+  if (!el) return
+  const start = el.selectionStart
+  const end = el.selectionEnd
+  const value = formAnswerMarkdown.value
+  const selected = value.slice(start, end)
+  const block = `${before}${selected}${after}`
+  formAnswerMarkdown.value = value.slice(0, start) + block + value.slice(end)
+  nextTick(() => {
+    el.focus()
+    const cursor = start + block.length
+    el.selectionStart = cursor
+    el.selectionEnd = cursor
+  })
+}
+
+const insertLine = (prefix: string) => {
+  const el = answerTextarea.value
+  if (!el) return
+  const start = el.selectionStart
+  const value = formAnswerMarkdown.value
+  const lineStart = value.lastIndexOf('\n', start - 1) + 1
+  formAnswerMarkdown.value =
+    value.slice(0, lineStart) + prefix + value.slice(lineStart)
+  nextTick(() => {
+    el.focus()
+    const cursor = start + prefix.length
+    el.selectionStart = cursor
+    el.selectionEnd = cursor
+  })
+}
+
+marked.use({
+  renderer: {
+    html() {
+      return ''
+    },
+  },
+  mangle: false,
+  headerIds: false,
+})
+
+const answerPreview = computed(() => {
+  if (!formAnswerMarkdown.value.trim()) return '<p class="muted">暂无内容</p>'
+  return marked.parse(formAnswerMarkdown.value) as string
+})
 </script>
 
 <style scoped>
@@ -312,5 +402,51 @@ watch(deckId, load)
   gap: 8px;
   flex-wrap: wrap;
   align-items: center;
+}
+
+.markdown-editor {
+  display: grid;
+  gap: 8px;
+}
+
+.editor-toolbar {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.markdown-editor textarea {
+  min-height: 160px;
+}
+
+.preview {
+  margin-top: 10px;
+}
+
+.markdown-body {
+  line-height: 1.7;
+}
+
+.markdown-body ul,
+.markdown-body ol {
+  padding-left: 18px;
+  margin: 8px 0;
+}
+
+.markdown-body code {
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: rgba(15, 76, 92, 0.12);
+  font-family: 'SFMono-Regular', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    'Liberation Mono', 'Courier New', monospace;
+}
+
+.markdown-body pre {
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(15, 76, 92, 0.08);
+  font-family: 'SFMono-Regular', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    'Liberation Mono', 'Courier New', monospace;
+  white-space: pre-wrap;
 }
 </style>

@@ -53,8 +53,8 @@ public class ItemService {
         if (updates.getHint() != null) {
             existing.setHint(updates.getHint());
         }
-        if (updates.getAnswerKey() != null) {
-            existing.setAnswerKey(updates.getAnswerKey());
+        if (updates.getAnswerMarkdown() != null) {
+            existing.setAnswerMarkdown(updates.getAnswerMarkdown());
         }
         if (updates.getTags() != null) {
             existing.setTags(updates.getTags());

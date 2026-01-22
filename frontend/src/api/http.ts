@@ -10,6 +10,12 @@ async function safeJson<T>(response: Response): Promise<T | null> {
   }
 }
 
+type ApiResponse<T> = {
+  code: string
+  message: string
+  data: T
+}
+
 const API_BASE = import.meta.env.VITE_API_BASE || '/api'
 
 export async function request<T>(
@@ -40,10 +46,13 @@ export async function request<T>(
     body: body ? JSON.stringify(body) : undefined,
   })
 
-  const data = await safeJson<T & { message?: string }>(response)
+  const data = await safeJson<ApiResponse<T> & { message?: string; data?: T }>(response)
   if (!response.ok) {
     const message = data?.message || response.statusText || '请求失败'
     throw new Error(message)
+  }
+  if (data && typeof data === 'object' && 'data' in data) {
+    return (data.data ?? (null as T)) as T
   }
   return (data ?? (null as T)) as T
 }

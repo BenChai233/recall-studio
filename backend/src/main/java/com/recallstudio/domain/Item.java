@@ -1,5 +1,7 @@
 package com.recallstudio.domain;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.time.OffsetDateTime;
 import java.util.List;
 
@@ -9,7 +11,7 @@ public class Item {
     private String type;
     private String prompt;
     private String hint;
-    private List<String> answerKey;
+    private String answerMarkdown;
     private List<String> tags;
     private String difficulty;
     private boolean archived;
@@ -57,12 +59,12 @@ public class Item {
         this.hint = hint;
     }
 
-    public List<String> getAnswerKey() {
-        return answerKey;
+    public String getAnswerMarkdown() {
+        return answerMarkdown;
     }
 
-    public void setAnswerKey(List<String> answerKey) {
-        this.answerKey = answerKey;
+    public void setAnswerMarkdown(String answerMarkdown) {
+        this.answerMarkdown = answerMarkdown;
     }
 
     public List<String> getTags() {

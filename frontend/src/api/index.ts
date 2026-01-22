@@ -71,7 +71,7 @@ export function createItem(payload: {
   type: string
   prompt: string
   hint?: string
-  answerKey?: string[]
+  answerMarkdown?: string
   tags?: string[]
   difficulty?: string
 }) {
@@ -85,7 +85,7 @@ export function updateItem(
     type?: string
     prompt?: string
     hint?: string
-    answerKey?: string[]
+    answerMarkdown?: string
     tags?: string[]
     difficulty?: string
     archived?: boolean

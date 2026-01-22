@@ -58,19 +58,19 @@ class SyncControllerTest {
 
         mockMvc.perform(get("/api/sync/status"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.dirty").value(true));
+                .andExpect(jsonPath("$.data.dirty").value(true));
 
         mockMvc.perform(post("/api/sync/snapshot"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.dirty").value(false))
-                .andExpect(jsonPath("$.hasSnapshot").value(true));
+                .andExpect(jsonPath("$.data.dirty").value(false))
+                .andExpect(jsonPath("$.data.hasSnapshot").value(true));
 
         item.setPrompt("更新题干");
         itemRepository.save(item);
 
         mockMvc.perform(get("/api/sync/status"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.dirty").value(true));
+                .andExpect(jsonPath("$.data.dirty").value(true));
     }
 
     private static Path initDataDir() {

@@ -14,12 +14,12 @@ public class SettingsController {
     }
 
     @GetMapping
-    public Settings get() {
-        return settingsService.get();
+    public ApiResponse<Settings> get() {
+        return ApiResponse.ok(settingsService.get());
     }
 
     @PutMapping
-    public Settings update(@RequestBody Settings settings) {
-        return settingsService.update(settings);
+    public ApiResponse<Settings> update(@RequestBody Settings settings) {
+        return ApiResponse.ok(settingsService.update(settings));
     }
 }

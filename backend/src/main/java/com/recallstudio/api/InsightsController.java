@@ -16,7 +16,7 @@ public class InsightsController {
     }
 
     @GetMapping("/reasons")
-    public InsightsService.ReasonDistribution reasons(@RequestParam(name = "days", required = false) Integer days) {
-        return insightsService.getReasonDistribution(days);
+    public ApiResponse<InsightsService.ReasonDistribution> reasons(@RequestParam(name = "days", required = false) Integer days) {
+        return ApiResponse.ok(insightsService.getReasonDistribution(days));
     }
 }

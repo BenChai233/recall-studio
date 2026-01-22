@@ -4,6 +4,18 @@
 
 ## 1. 基本约定
 
+### 1.1 响应包装
+- 成功响应统一包装为：
+```json
+{ "code": "OK", "message": "ok", "data": { } }
+```
+- 本文档中的“响应示例”默认展示 `data` 字段内容。
+- 错误响应保持 HTTP 4xx/5xx，并返回：
+```json
+{ "code": "VALIDATION_ERROR", "message": "deckId is required", "data": { "field": "deckId" } }
+```
+
+
 - Base URL：`http://localhost:8080`
 - 时间格式：ISO 8601（例如 `2026-01-22T10:00:00+08:00`）
 - ID 格式：UUID
@@ -17,7 +29,7 @@ HTTP 4xx/5xx 返回示例：
 {
   "code": "VALIDATION_ERROR",
   "message": "deckId is required",
-  "details": {
+  "data": {
     "field": "deckId"
   }
 }
@@ -95,7 +107,7 @@ HTTP 4xx/5xx 返回示例：
     "type": "concept",
     "prompt": "解释 JVM 的类加载过程。",
     "hint": "加载/验证/准备/解析/初始化",
-    "answerKey": ["加载", "验证", "准备", "解析", "初始化"],
+    "answerMarkdown": "- 加载\n- 验证\n- 准备\n- 解析\n- 初始化",
     "tags": ["jvm"],
     "difficulty": "medium",
     "archived": false,
@@ -120,7 +132,7 @@ HTTP 4xx/5xx 返回示例：
   "type": "concept",
   "prompt": "解释 JVM 的类加载过程。",
   "hint": "加载/验证/准备/解析/初始化",
-  "answerKey": ["加载", "验证", "准备", "解析", "初始化"],
+  "answerMarkdown": "- 加载\n- 验证\n- 准备\n- 解析\n- 初始化",
   "tags": ["jvm"],
   "difficulty": "medium"
 }

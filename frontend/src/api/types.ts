@@ -25,7 +25,7 @@ export interface Item {
   type: string
   prompt: string
   hint?: string
-  answerKey?: string[]
+  answerMarkdown?: string
   tags?: string[]
   difficulty?: string
   archived?: boolean
