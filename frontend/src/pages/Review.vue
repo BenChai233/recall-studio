@@ -30,7 +30,7 @@
   <section v-if="session && currentItem" class="grid cols-2">
     <div class="card">
       <h3 class="card-title">题干</h3>
-      <p class="prompt">{{ currentItem.prompt }}</p>
+      <div class="prompt markdown-body" v-html="promptHtml"></div>
       <div class="prompt-meta">
         <span class="chip">{{ currentItem.type }}</span>
         <span class="tag">{{ dueLabel(currentItem.dueType) }}</span>
@@ -88,7 +88,7 @@
     </div>
     <div class="list" style="margin-top: 16px">
       <div v-for="item in summary.wrongItems" :key="item.itemId" class="list-item">
-        <div>{{ item.prompt || '未记录题干' }}</div>
+        <div>{{ promptSummary(item.prompt || '') }}</div>
         <span class="chip">错题</span>
       </div>
     </div>
@@ -115,6 +115,7 @@ import { computed, onMounted, ref } from 'vue'
 import { createSession, getSessionSummary, listDecks, submitReview } from '../api'
 import { pushToast } from '../composables/toast'
 import type { Deck, SessionResponse, SessionSummary } from '../api/types'
+import { renderMarkdown, stripMarkdown } from '../utils/markdown'
 
 const decks = ref<Deck[]>([])
 const selectedDeckId = ref('')
@@ -136,6 +137,13 @@ const currentItem = computed(() => {
   if (!session.value) return null
   return session.value.items[currentIndex.value] || null
 })
+
+const promptHtml = computed(() => {
+  if (!currentItem.value) return ''
+  return renderMarkdown(currentItem.value.prompt)
+})
+
+const promptSummary = (prompt: string) => stripMarkdown(prompt, 80) || '未记录题干'
 
 const dueLabel = (dueType: string) => {
   if (dueType === 'WRONG') return '错题复测'
@@ -236,6 +244,33 @@ select {
 .prompt {
   font-size: 18px;
   line-height: 1.5;
+}
+
+.markdown-body {
+  line-height: 1.7;
+}
+
+.markdown-body ul,
+.markdown-body ol {
+  padding-left: 18px;
+  margin: 8px 0;
+}
+
+.markdown-body code {
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: rgba(15, 76, 92, 0.12);
+  font-family: 'SFMono-Regular', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    'Liberation Mono', 'Courier New', monospace;
+}
+
+.markdown-body pre {
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(15, 76, 92, 0.08);
+  font-family: 'SFMono-Regular', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    'Liberation Mono', 'Courier New', monospace;
+  white-space: pre-wrap;
 }
 
 .prompt-meta {

@@ -18,8 +18,42 @@
     <h3 class="card-title">{{ formTitle }}</h3>
     <div class="item-form">
       <div class="field">
-        <label>题干</label>
-        <textarea v-model="formPrompt" placeholder="输入题干"></textarea>
+        <label>题干（Markdown）</label>
+        <div class="markdown-editor">
+          <div class="editor-toolbar">
+            <button class="btn ghost" type="button" @click="wrapSelection('prompt', '**', '**')">
+              加粗
+            </button>
+            <button class="btn ghost" type="button" @click="wrapSelection('prompt', '*', '*')">
+              斜体
+            </button>
+            <button class="btn ghost" type="button" @click="wrapSelection('prompt', '`', '`')">
+              代码
+            </button>
+            <button
+              class="btn ghost"
+              type="button"
+              @click="insertBlock('prompt', '```\\n', '\\n```')"
+            >
+              代码块
+            </button>
+            <button class="btn ghost" type="button" @click="insertLine('prompt', '- ')">
+              无序列表
+            </button>
+            <button class="btn ghost" type="button" @click="insertLine('prompt', '1. ')">
+              有序列表
+            </button>
+          </div>
+          <textarea
+            ref="promptTextarea"
+            v-model="formPrompt"
+            placeholder="使用 Markdown 编写题干，支持多行。"
+          ></textarea>
+        </div>
+        <div class="preview card soft">
+          <div class="muted">预览</div>
+          <div class="markdown-body" v-html="promptPreview"></div>
+        </div>
       </div>
       <div class="field">
         <label>题型</label>
@@ -39,14 +73,32 @@
         <label>答案要点（Markdown）</label>
         <div class="markdown-editor">
           <div class="editor-toolbar">
-            <button class="btn ghost" type="button" @click="wrapSelection('**', '**')">加粗</button>
-            <button class="btn ghost" type="button" @click="wrapSelection('*', '*')">斜体</button>
-            <button class="btn ghost" type="button" @click="wrapSelection('`', '`')">代码</button>
-            <button class="btn ghost" type="button" @click="insertBlock('```\\n', '\\n```')">
+            <button
+              class="btn ghost"
+              type="button"
+              @click="wrapSelection('answer', '**', '**')"
+            >
+              加粗
+            </button>
+            <button class="btn ghost" type="button" @click="wrapSelection('answer', '*', '*')">
+              斜体
+            </button>
+            <button class="btn ghost" type="button" @click="wrapSelection('answer', '`', '`')">
+              代码
+            </button>
+            <button
+              class="btn ghost"
+              type="button"
+              @click="insertBlock('answer', '```\\n', '\\n```')"
+            >
               代码块
             </button>
-            <button class="btn ghost" type="button" @click="insertLine('- ')">无序列表</button>
-            <button class="btn ghost" type="button" @click="insertLine('1. ')">有序列表</button>
+            <button class="btn ghost" type="button" @click="insertLine('answer', '- ')">
+              无序列表
+            </button>
+            <button class="btn ghost" type="button" @click="insertLine('answer', '1. ')">
+              有序列表
+            </button>
           </div>
           <textarea
             ref="answerTextarea"
@@ -97,7 +149,7 @@
     <div v-else class="list">
       <div v-for="item in filteredItems" :key="item.itemId" class="list-item">
         <div>
-          <div>{{ item.prompt }}</div>
+          <div>{{ promptSummary(item.prompt) }}</div>
           <div class="muted">{{ item.type }} · {{ (item.tags || []).join(' / ') || '无标签' }}</div>
         </div>
         <div class="item-ops">
@@ -119,7 +171,7 @@ import { useRoute } from 'vue-router'
 import { createItem, deleteItem, exportData, getDeck, listItems, updateItem } from '../api'
 import { pushToast } from '../composables/toast'
 import type { Deck, Item } from '../api/types'
-import { marked } from 'marked'
+import { renderMarkdown, stripMarkdown } from '../utils/markdown'
 
 const route = useRoute()
 const deck = ref<Deck | null>(null)
@@ -137,6 +189,7 @@ const formHint = ref('')
 const formAnswerMarkdown = ref('')
 const formTags = ref('')
 const formDifficulty = ref('')
+const promptTextarea = ref<HTMLTextAreaElement | null>(null)
 const answerTextarea = ref<HTMLTextAreaElement | null>(null)
 
 const deckId = computed(() => route.params.deckId as string)
@@ -145,7 +198,8 @@ const filteredItems = computed(() => {
   const kw = keyword.value.trim().toLowerCase()
   return items.value.filter((item) => {
     if (!kw) return true
-    const haystack = `${item.prompt}${item.type}${(item.tags || []).join('')}`
+    const promptText = stripMarkdown(item.prompt, 200)
+    const haystack = `${promptText}${item.type}${(item.tags || []).join('')}`
     return haystack.toLowerCase().includes(kw)
   })
 })
@@ -296,15 +350,21 @@ const normalizeAnswerMarkdown = () => {
   return plain
 }
 
-const wrapSelection = (before: string, after: string) => {
-  const el = answerTextarea.value
+const getEditorTarget = (target: 'prompt' | 'answer') => {
+  if (target === 'prompt') {
+    return { el: promptTextarea.value, value: formPrompt }
+  }
+  return { el: answerTextarea.value, value: formAnswerMarkdown }
+}
+
+const wrapSelection = (target: 'prompt' | 'answer', before: string, after: string) => {
+  const { el, value } = getEditorTarget(target)
   if (!el) return
   const start = el.selectionStart
   const end = el.selectionEnd
-  const value = formAnswerMarkdown.value
-  const selected = value.slice(start, end)
-  formAnswerMarkdown.value =
-    value.slice(0, start) + before + selected + after + value.slice(end)
+  const current = value.value
+  const selected = current.slice(start, end)
+  value.value = current.slice(0, start) + before + selected + after + current.slice(end)
   nextTick(() => {
     el.focus()
     const cursor = start + before.length + selected.length + after.length
@@ -313,15 +373,15 @@ const wrapSelection = (before: string, after: string) => {
   })
 }
 
-const insertBlock = (before: string, after: string) => {
-  const el = answerTextarea.value
+const insertBlock = (target: 'prompt' | 'answer', before: string, after: string) => {
+  const { el, value } = getEditorTarget(target)
   if (!el) return
   const start = el.selectionStart
   const end = el.selectionEnd
-  const value = formAnswerMarkdown.value
-  const selected = value.slice(start, end)
+  const current = value.value
+  const selected = current.slice(start, end)
   const block = `${before}${selected}${after}`
-  formAnswerMarkdown.value = value.slice(0, start) + block + value.slice(end)
+  value.value = current.slice(0, start) + block + current.slice(end)
   nextTick(() => {
     el.focus()
     const cursor = start + block.length
@@ -330,14 +390,13 @@ const insertBlock = (before: string, after: string) => {
   })
 }
 
-const insertLine = (prefix: string) => {
-  const el = answerTextarea.value
+const insertLine = (target: 'prompt' | 'answer', prefix: string) => {
+  const { el, value } = getEditorTarget(target)
   if (!el) return
   const start = el.selectionStart
-  const value = formAnswerMarkdown.value
-  const lineStart = value.lastIndexOf('\n', start - 1) + 1
-  formAnswerMarkdown.value =
-    value.slice(0, lineStart) + prefix + value.slice(lineStart)
+  const current = value.value
+  const lineStart = current.lastIndexOf('\n', start - 1) + 1
+  value.value = current.slice(0, lineStart) + prefix + current.slice(lineStart)
   nextTick(() => {
     el.focus()
     const cursor = start + prefix.length
@@ -346,19 +405,19 @@ const insertLine = (prefix: string) => {
   })
 }
 
-marked.use({
-  renderer: {
-    html() {
-      return ''
-    },
-  },
-  mangle: false,
-  headerIds: false,
+const promptSummary = (prompt: string) => {
+  const summary = stripMarkdown(prompt, 80)
+  return summary || '未填写题干'
+}
+
+const promptPreview = computed(() => {
+  if (!formPrompt.value.trim()) return '<p class="muted">暂无内容</p>'
+  return renderMarkdown(formPrompt.value)
 })
 
 const answerPreview = computed(() => {
   if (!formAnswerMarkdown.value.trim()) return '<p class="muted">暂无内容</p>'
-  return marked.parse(formAnswerMarkdown.value) as string
+  return renderMarkdown(formAnswerMarkdown.value)
 })
 </script>
 

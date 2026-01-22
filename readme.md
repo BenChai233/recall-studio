@@ -50,7 +50,7 @@
 - 新建/编辑/删除 Deck。
 - 新建/编辑/归档/恢复 Item。
 - Item 字段：
-  - 题干（必填）
+  - 题干（必填，支持 Markdown）
   - 题型：概念/机制/场景选型/代码阅读/填空/选择等
   - 标签（多选）
   - 难度（可选）
@@ -160,7 +160,7 @@ config/settings.json
   - `itemId`：全局唯一（UUID）
   - `deckId`
   - `type`：concept/mechanism/scenario/code/…
-  - `prompt`：题干
+  - `prompt`：题干（支持 Markdown）
   - `hint`：提示（可选）
   - `answerMarkdown`：Markdown 要点（可选，字符串）
   - `tags`：标签数组

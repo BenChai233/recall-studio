@@ -99,6 +99,7 @@ import { RouterLink } from 'vue-router'
 import { getSyncStatus, getTodayStats, listDecks, listItems, markSyncSnapshot } from '../api'
 import { pushToast } from '../composables/toast'
 import type { Deck, Item, SyncStatus, TodayStats } from '../api/types'
+import { stripMarkdown } from '../utils/markdown'
 
 const today = ref<TodayStats | null>(null)
 const decks = ref<Deck[]>([])
@@ -139,7 +140,7 @@ const focusItems = computed(() => {
       }
       return {
         itemId: item.itemId,
-        prompt: item.prompt,
+        prompt: stripMarkdown(item.prompt, 60) || '未填写题干',
         deckName: deckMap.value.get(item.deckId) || '未命名牌组',
         dueLabel,
         dueDate: wrongDue ?? due ?? new Date(8640000000000000),
