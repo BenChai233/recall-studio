@@ -15,6 +15,9 @@
         <div class="muted">查看题干、要点与题目元信息。</div>
       </div>
       <div class="detail-actions">
+        <button class="btn ghost" type="button" :disabled="undoing" @click="undoReview">
+          撤回最近一次复习
+        </button>
         <RouterLink v-if="deckId" class="btn ghost" :to="`/decks/${deckId}`">
           返回牌组
         </RouterLink>
@@ -73,13 +76,15 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
-import { getItem } from '../api'
+import { getItem, undoItemReview } from '../api'
 import type { Item } from '../api/types'
 import { renderMarkdown } from '../utils/markdown'
+import { pushToast } from '../composables/toast'
 
 const route = useRoute()
 const item = ref<Item | null>(null)
 const loading = ref(false)
+const undoing = ref(false)
 const error = ref('')
 
 const deckId = computed(() => (route.params.deckId as string) || '')
@@ -107,6 +112,22 @@ const load = async () => {
     error.value = err instanceof Error ? err.message : '加载失败'
   } finally {
     loading.value = false
+  }
+}
+
+const undoReview = async () => {
+  if (!item.value) return
+  if (!window.confirm('确认撤回该题最近一次复习记录？')) return
+  undoing.value = true
+  error.value = ''
+  try {
+    await undoItemReview(item.value.itemId)
+    pushToast('已撤回最近一次复习', 'success')
+    await load()
+  } catch (err) {
+    error.value = err instanceof Error ? err.message : '撤回失败'
+  } finally {
+    undoing.value = false
   }
 }
 

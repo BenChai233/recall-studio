@@ -27,6 +27,16 @@ public class ReviewController {
         return ApiResponse.ok(reviewService.submitReview(request));
     }
 
+    @PostMapping("/sessions/{sessionId}/undo")
+    public ApiResponse<ReviewService.UndoResult> undo(@PathVariable("sessionId") String sessionId) {
+        return ApiResponse.ok(reviewService.undoLastReview(sessionId));
+    }
+
+    @PostMapping("/items/{itemId}/undo")
+    public ApiResponse<ReviewService.UndoResult> undoByItem(@PathVariable("itemId") String itemId) {
+        return ApiResponse.ok(reviewService.undoLastReviewByItem(itemId));
+    }
+
     @GetMapping("/sessions/{sessionId}/summary")
     public ApiResponse<ReviewService.SessionSummary> summary(@PathVariable("sessionId") String sessionId) {
         return ApiResponse.ok(reviewService.getSessionSummary(sessionId));

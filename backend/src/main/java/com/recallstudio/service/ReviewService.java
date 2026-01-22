@@ -5,6 +5,7 @@ import com.recallstudio.domain.Item;
 import com.recallstudio.domain.Review;
 import com.recallstudio.domain.Settings;
 import com.recallstudio.domain.SrsState;
+import com.recallstudio.exception.AppException;
 import com.recallstudio.exception.NotFoundException;
 import com.recallstudio.repo.ItemRepository;
 import com.recallstudio.repo.ReviewRepository;
@@ -119,6 +120,7 @@ public class ReviewService {
                 .orElseThrow(() -> new NotFoundException("item not found"));
         OffsetDateTime now = request.reviewedAt() != null ? request.reviewedAt() : OffsetDateTime.now();
 
+        SrsState prevSrs = copySrs(item.getSrs());
         SrsState updated = srsService.update(item.getSrs(), request.score(), now);
         applyWrongSchedule(updated, request.score(), settingsRepository.load(), now);
         item.setSrs(updated);
@@ -133,9 +135,45 @@ public class ReviewService {
         review.setScore(request.score());
         review.setAnswer(request.answer());
         review.setReasonTags(request.reasonTags());
+        review.setPrevSrs(prevSrs);
+        review.setPrevSrsPresent(true);
         reviewRepository.append(review);
 
         return new ReviewResult(updated.getDue(), updated);
+    }
+
+    public UndoResult undoLastReview(String sessionId) {
+        Review review = reviewRepository.findLastBySession(sessionId);
+        if (review == null || review.getReviewId() == null) {
+            throw new NotFoundException("no review to undo");
+        }
+        SrsState targetSrs = resolvePrevSrs(review);
+        boolean removed = reviewRepository.removeByReviewId(sessionId, review.getReviewId(), review.getReviewedAt());
+        if (!removed) {
+            throw new AppException("UNDO_FAILED", "failed to remove review", 500);
+        }
+        Item item = itemRepository.findById(review.getItemId())
+                .orElseThrow(() -> new NotFoundException("item not found"));
+        item.setSrs(targetSrs);
+        itemRepository.save(item);
+        return new UndoResult(review.getItemId(), review.getScore(), review.getAnswer(), review.getReasonTags());
+    }
+
+    public UndoResult undoLastReviewByItem(String itemId) {
+        Review review = reviewRepository.findLastByItem(itemId);
+        if (review == null || review.getReviewId() == null) {
+            throw new NotFoundException("no review to undo");
+        }
+        SrsState targetSrs = resolvePrevSrs(review);
+        boolean removed = reviewRepository.removeByReviewId(review.getSessionId(), review.getReviewId(), review.getReviewedAt());
+        if (!removed) {
+            throw new AppException("UNDO_FAILED", "failed to remove review", 500);
+        }
+        Item item = itemRepository.findById(itemId)
+                .orElseThrow(() -> new NotFoundException("item not found"));
+        item.setSrs(targetSrs);
+        itemRepository.save(item);
+        return new UndoResult(review.getItemId(), review.getScore(), review.getAnswer(), review.getReasonTags());
     }
 
     public SessionSummary getSessionSummary(String sessionId) {
@@ -196,6 +234,52 @@ public class ReviewService {
         }
     }
 
+    private SrsState copySrs(SrsState source) {
+        if (source == null) {
+            return null;
+        }
+        SrsState copy = new SrsState();
+        copy.setEasiness(source.getEasiness());
+        copy.setInterval(source.getInterval());
+        copy.setDue(source.getDue());
+        copy.setReps(source.getReps());
+        copy.setLastScore(source.getLastScore());
+        copy.setLastReviewedAt(source.getLastReviewedAt());
+        copy.setWrongStep(source.getWrongStep());
+        copy.setWrongDue(source.getWrongDue());
+        return copy;
+    }
+
+    private SrsState resolvePrevSrs(Review review) {
+        if (review.isPrevSrsPresent()) {
+            return copySrs(review.getPrevSrs());
+        }
+        return rebuildSrsBefore(review.getItemId(), review.getReviewId());
+    }
+
+    private SrsState rebuildSrsBefore(String itemId, String excludedReviewId) {
+        List<Review> reviews = reviewRepository.findByItem(itemId);
+        if (reviews.isEmpty()) {
+            return null;
+        }
+        List<Review> ordered = reviews.stream()
+                .filter(r -> r.getReviewId() != null && !r.getReviewId().equals(excludedReviewId))
+                .filter(r -> r.getReviewedAt() != null)
+                .sorted(Comparator.comparing(Review::getReviewedAt))
+                .collect(Collectors.toList());
+        if (ordered.isEmpty()) {
+            return null;
+        }
+        Settings settings = settingsRepository.load();
+        SrsState srs = null;
+        for (Review review : ordered) {
+            OffsetDateTime when = review.getReviewedAt();
+            srs = srsService.update(srs, review.getScore(), when);
+            applyWrongSchedule(srs, review.getScore(), settings, when);
+        }
+        return srs;
+    }
+
     public record TodayStats(int dueCount, int wrongCount, int newCount, int totalPlanned) {}
 
     public record SessionRequest(String deckId, Boolean onlyWrong, Integer limit) {}
@@ -208,6 +292,8 @@ public class ReviewService {
                                OffsetDateTime reviewedAt) {}
 
     public record ReviewResult(OffsetDateTime nextDue, SrsState srs) {}
+
+    public record UndoResult(String itemId, int score, String answer, List<String> reasonTags) {}
 
     public record SummaryItem(String itemId, String prompt) {}
 

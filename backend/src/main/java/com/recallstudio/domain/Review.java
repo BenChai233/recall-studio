@@ -12,6 +12,8 @@ public class Review {
     private int score;
     private String answer;
     private List<String> reasonTags;
+    private SrsState prevSrs;
+    private boolean prevSrsPresent;
 
     public String getReviewId() {
         return reviewId;
@@ -75,5 +77,21 @@ public class Review {
 
     public void setReasonTags(List<String> reasonTags) {
         this.reasonTags = reasonTags;
+    }
+
+    public SrsState getPrevSrs() {
+        return prevSrs;
+    }
+
+    public void setPrevSrs(SrsState prevSrs) {
+        this.prevSrs = prevSrs;
+    }
+
+    public boolean isPrevSrsPresent() {
+        return prevSrsPresent;
+    }
+
+    public void setPrevSrsPresent(boolean prevSrsPresent) {
+        this.prevSrsPresent = prevSrsPresent;
     }
 }

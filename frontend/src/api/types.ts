@@ -66,6 +66,13 @@ export interface ReviewResult {
   srs: SrsState
 }
 
+export interface UndoReviewResult {
+  itemId: string
+  score: number
+  answer?: string
+  reasonTags?: string[]
+}
+
 export interface SessionSummary {
   avgScore: number
   scoreCount: Record<string, number>

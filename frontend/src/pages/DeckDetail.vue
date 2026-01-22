@@ -154,6 +154,14 @@
         </RouterLink>
         <div class="item-ops">
           <span class="chip">{{ formatStatus(item) }}</span>
+          <button
+            class="btn ghost"
+            type="button"
+            :disabled="undoingId === item.itemId"
+            @click="undoItemReviewAction(item)"
+          >
+            撤回复习
+          </button>
           <button class="btn ghost" type="button" @click="openEdit(item)">编辑</button>
           <button class="btn ghost" type="button" @click="toggleArchive(item)">
             {{ item.archived ? '恢复' : '归档' }}
@@ -168,7 +176,15 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
-import { createItem, deleteItem, exportData, getDeck, listItems, updateItem } from '../api'
+import {
+  createItem,
+  deleteItem,
+  exportData,
+  getDeck,
+  listItems,
+  undoItemReview,
+  updateItem,
+} from '../api'
 import { RouterLink } from 'vue-router'
 import { pushToast } from '../composables/toast'
 import type { Deck, Item } from '../api/types'
@@ -181,6 +197,7 @@ const keyword = ref('')
 const loading = ref(false)
 const error = ref('')
 const saving = ref(false)
+const undoingId = ref<string | null>(null)
 
 const showForm = ref(false)
 const editingId = ref<string | null>(null)
@@ -304,6 +321,21 @@ const removeItem = async (item: Item) => {
     await load()
   } catch (err) {
     error.value = err instanceof Error ? err.message : '删除失败'
+  }
+}
+
+const undoItemReviewAction = async (item: Item) => {
+  if (!window.confirm('确认撤回该题最近一次复习记录？')) return
+  undoingId.value = item.itemId
+  error.value = ''
+  try {
+    await undoItemReview(item.itemId)
+    pushToast('已撤回最近一次复习', 'success')
+    await load()
+  } catch (err) {
+    error.value = err instanceof Error ? err.message : '撤回失败'
+  } finally {
+    undoingId.value = null
   }
 }
 

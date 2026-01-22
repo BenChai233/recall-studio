@@ -57,14 +57,43 @@
         <div class="muted">选择 0/1/2 更新调度。</div>
       </div>
       <div class="rating-buttons">
-        <button class="btn ghost" type="button" :disabled="submitting" @click="submit(0)">
+        <button
+          type="button"
+          :disabled="submitting"
+          :class="['btn', pendingScore === 0 ? 'primary' : 'ghost', { selected: pendingScore === 0 }]"
+          @click="selectScore(0)"
+        >
           0 再来
         </button>
-        <button class="btn ghost" type="button" :disabled="submitting" @click="submit(1)">
+        <button
+          type="button"
+          :disabled="submitting"
+          :class="['btn', pendingScore === 1 ? 'primary' : 'ghost', { selected: pendingScore === 1 }]"
+          @click="selectScore(1)"
+        >
           1 吃力
         </button>
-        <button class="btn primary" type="button" :disabled="submitting" @click="submit(2)">
+        <button
+          type="button"
+          :disabled="submitting"
+          :class="['btn', pendingScore === 2 ? 'primary' : 'ghost', { selected: pendingScore === 2 }]"
+          @click="selectScore(2)"
+        >
           2 掌握
+        </button>
+        <button class="btn ghost" type="button" :disabled="!canUndo" @click="undoLast">
+          撤回上一题
+        </button>
+      </div>
+    </div>
+    <div v-if="pendingScore !== null" class="confirm-row">
+      <div class="muted">已选择评分：{{ scoreLabel(pendingScore) }}</div>
+      <div class="confirm-actions">
+        <button class="btn ghost" type="button" :disabled="submitting" @click="pendingScore = null">
+          返回修改
+        </button>
+        <button class="btn primary" type="button" :disabled="submitting" @click="confirmSubmit">
+          确认提交
         </button>
       </div>
     </div>
@@ -104,7 +133,12 @@
         <button class="btn ghost" type="button" @click="editableQuestions.push('')">新增一条</button>
       </div>
     </div>
-    <button class="btn" type="button" @click="startSession">再来一轮</button>
+    <div class="form-actions" style="margin-top: 12px">
+      <button class="btn ghost" type="button" :disabled="!canUndo" @click="undoLast">
+        撤回上一题
+      </button>
+      <button class="btn" type="button" @click="startSession">再来一轮</button>
+    </div>
   </section>
 
   <section v-if="loadingSession" class="card soft">正在生成会话…</section>
@@ -112,7 +146,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import { createSession, getSessionSummary, listDecks, submitReview } from '../api'
+import { createSession, getSessionSummary, listDecks, submitReview, undoLastReview } from '../api'
 import { pushToast } from '../composables/toast'
 import type { Deck, SessionResponse, SessionSummary } from '../api/types'
 import { renderMarkdown, stripMarkdown } from '../utils/markdown'
@@ -130,12 +164,22 @@ const error = ref('')
 const loadingSession = ref(false)
 const submitting = ref(false)
 const editableQuestions = ref<string[]>([])
+const pendingScore = ref<number | null>(null)
 
 const reasonOptions = ['概念', '机制', '边界', '工程实践']
 
 const currentItem = computed(() => {
   if (!session.value) return null
   return session.value.items[currentIndex.value] || null
+})
+
+const canUndo = computed(() => {
+  return (
+    !!session.value &&
+    currentIndex.value > 0 &&
+    !submitting.value &&
+    pendingScore.value === null
+  )
 })
 
 const promptHtml = computed(() => {
@@ -151,6 +195,12 @@ const dueLabel = (dueType: string) => {
   return '到期'
 }
 
+const scoreLabel = (score: number) => {
+  if (score === 0) return '0 再来'
+  if (score === 1) return '1 吃力'
+  return '2 掌握'
+}
+
 const startSession = async () => {
   loadingSession.value = true
   error.value = ''
@@ -159,6 +209,7 @@ const startSession = async () => {
   answer.value = ''
   reasonTags.value = []
   editableQuestions.value = []
+  pendingScore.value = null
   try {
     session.value = await createSession({
       deckId: selectedDeckId.value || null,
@@ -176,7 +227,7 @@ const startSession = async () => {
   }
 }
 
-const submit = async (score: number) => {
+const submitScore = async (score: number) => {
   if (!session.value || !currentItem.value) return
   submitting.value = true
   error.value = ''
@@ -200,11 +251,42 @@ const submit = async (score: number) => {
         : []
       pushToast('会话已完成', 'success')
     }
+    pendingScore.value = null
   } catch (err) {
     error.value = err instanceof Error ? err.message : '提交失败'
   } finally {
     submitting.value = false
   }
+}
+
+const selectScore = (score: number) => {
+  if (submitting.value) return
+  pendingScore.value = score
+}
+
+const undoLast = async () => {
+  if (!session.value || currentIndex.value <= 0) return
+  submitting.value = true
+  error.value = ''
+  try {
+    const result = await undoLastReview(session.value.sessionId)
+    summary.value = null
+    const targetIndex = session.value.items.findIndex((item) => item.itemId === result.itemId)
+    currentIndex.value = targetIndex >= 0 ? targetIndex : Math.max(0, currentIndex.value - 1)
+    answer.value = result.answer || ''
+    reasonTags.value = result.reasonTags ?? []
+    pendingScore.value = result.score
+    pushToast('已撤回上一题', 'info')
+  } catch (err) {
+    error.value = err instanceof Error ? err.message : '撤回失败'
+  } finally {
+    submitting.value = false
+  }
+}
+
+const confirmSubmit = async () => {
+  if (pendingScore.value === null) return
+  await submitScore(pendingScore.value)
 }
 
 const loadDecks = async () => {
@@ -301,6 +383,34 @@ select {
 }
 
 .rating-buttons {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.rating-buttons .btn.selected {
+  box-shadow: 0 0 0 2px rgba(15, 76, 92, 0.3);
+  border-color: rgba(15, 76, 92, 0.5);
+}
+
+.rating-buttons .btn.selected:not(.primary) {
+  background: rgba(15, 76, 92, 0.12);
+  color: var(--accent-2);
+}
+
+.confirm-row {
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: 12px;
+  background: rgba(15, 76, 92, 0.08);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.confirm-actions {
   display: flex;
   gap: 10px;
   flex-wrap: wrap;

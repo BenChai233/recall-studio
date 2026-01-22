@@ -7,6 +7,7 @@ import type {
   Settings,
   TodayStats,
   ReviewResult,
+  UndoReviewResult,
   ReasonDistribution,
   SyncStatus,
 } from './types'
@@ -123,6 +124,18 @@ export function submitReview(payload: {
   return request<ReviewResult>('/reviews', {
     method: 'POST',
     body: payload,
+  })
+}
+
+export function undoLastReview(sessionId: string) {
+  return request<UndoReviewResult>(`/reviews/sessions/${sessionId}/undo`, {
+    method: 'POST',
+  })
+}
+
+export function undoItemReview(itemId: string) {
+  return request<UndoReviewResult>(`/reviews/items/${itemId}/undo`, {
+    method: 'POST',
   })
 }
 
