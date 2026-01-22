@@ -3,13 +3,13 @@
     <div class="deck-header">
       <div>
         <h2 class="section-title">题库管理</h2>
-        <div class="muted">集中管理牌组与题目结构。</div>
+        <div class="muted">集中管理专题与题目结构。</div>
       </div>
       <div class="deck-actions">
         <input ref="importInput" type="file" accept="application/json" hidden @change="handleImport" />
         <button class="btn ghost" type="button" @click="triggerImport">导入</button>
         <button class="btn ghost" type="button" @click="handleExport">导出</button>
-        <button class="btn primary" type="button" @click="openCreate">新建牌组</button>
+        <button class="btn primary" type="button" @click="openCreate">新建专题</button>
       </div>
     </div>
     <div class="deck-filter">
@@ -70,7 +70,7 @@
   <section v-if="loading" class="card soft">正在载入题库数据…</section>
 
   <section v-else-if="filteredDecks.length === 0" class="empty">
-    还没有可展示的牌组
+    还没有可展示的专题
   </section>
 
   <section v-else class="grid cols-3">
@@ -93,7 +93,7 @@
           <span v-for="tag in deck.tags || []" :key="tag" class="chip">{{ tag }}</span>
         </div>
         <div class="deck-ops">
-          <RouterLink class="btn" :to="`/decks/${deck.deckId}`">进入牌组</RouterLink>
+          <RouterLink class="btn" :to="`/decks/${deck.deckId}`">进入专题</RouterLink>
           <button class="btn ghost" type="button" @click="openEdit(deck)">编辑</button>
           <button class="btn ghost" type="button" @click="toggleArchive(deck)">
             {{ deck.archived ? '恢复' : '归档' }}
@@ -182,7 +182,7 @@ const closeForm = () => {
 
 const submitForm = async () => {
   if (!formName.value.trim()) {
-    pushToast('请填写牌组名称', 'error')
+    pushToast('请填写专题名称', 'error')
     return
   }
   saving.value = true
@@ -198,14 +198,14 @@ const submitForm = async () => {
         description: formDescription.value.trim() || undefined,
         tags,
       })
-      pushToast('牌组已更新', 'success')
+      pushToast('专题已更新', 'success')
     } else {
       await createDeck({
         name: formName.value.trim(),
         description: formDescription.value.trim() || undefined,
         tags,
       })
-      pushToast('牌组已创建', 'success')
+      pushToast('专题已创建', 'success')
     }
     showForm.value = false
     await load()
@@ -219,7 +219,7 @@ const submitForm = async () => {
 const toggleArchive = async (deck: Deck) => {
   try {
     await updateDeck(deck.deckId, { archived: !deck.archived })
-    pushToast(deck.archived ? '已恢复牌组' : '已归档牌组', 'success')
+    pushToast(deck.archived ? '已恢复专题' : '已归档专题', 'success')
     await load()
   } catch (err) {
     error.value = err instanceof Error ? err.message : '操作失败'
@@ -227,10 +227,10 @@ const toggleArchive = async (deck: Deck) => {
 }
 
 const removeDeck = async (deck: Deck) => {
-  if (!window.confirm(`确认删除牌组「${deck.name}」？`)) return
+  if (!window.confirm(`确认删除专题「${deck.name}」？`)) return
   try {
     await deleteDeck(deck.deckId)
-    pushToast('已删除牌组', 'success')
+    pushToast('已删除专题', 'success')
     await load()
   } catch (err) {
     error.value = err instanceof Error ? err.message : '删除失败'
@@ -252,7 +252,7 @@ const handleImport = async (event: Event) => {
       decks: json.decks || [],
       items: json.items || [],
     })
-    pushToast(`导入完成：牌组 ${result.importedDecks}，题目 ${result.importedItems}`, 'success')
+    pushToast(`导入完成：专题 ${result.importedDecks}，题目 ${result.importedItems}`, 'success')
     await load()
   } catch (err) {
     error.value = err instanceof Error ? err.message : '导入失败'
@@ -281,7 +281,7 @@ const handleExport = async () => {
   }
 }
 
-const formTitle = computed(() => (editingId.value ? '编辑牌组' : '新建牌组'))
+const formTitle = computed(() => (editingId.value ? '编辑专题' : '新建专题'))
 
 const load = async () => {
   loading.value = true

@@ -12,7 +12,7 @@
             <circle cx="11" cy="11" r="7" />
             <path d="M20 20L16.5 16.5" />
           </svg>
-          <input placeholder="搜索题目、标签、牌组" />
+          <input placeholder="搜索题目、标签、专题" />
         </div>
         <StatusPill status="手动同步" note="就绪" />
       </header>

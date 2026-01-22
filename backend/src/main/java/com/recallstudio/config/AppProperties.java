@@ -1,25 +1,13 @@
 package com.recallstudio.config;
 
+import lombok.Getter;
+import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
+@Getter
+@Setter
 @ConfigurationProperties(prefix = "app")
 public class AppProperties {
     private String configDir = ".recall-studio";
     private String dataDir = "";
-
-    public String getConfigDir() {
-        return configDir;
-    }
-
-    public void setConfigDir(String configDir) {
-        this.configDir = configDir;
-    }
-
-    public String getDataDir() {
-        return dataDir;
-    }
-
-    public void setDataDir(String dataDir) {
-        this.dataDir = dataDir;
-    }
 }

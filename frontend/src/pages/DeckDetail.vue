@@ -2,8 +2,8 @@
   <section class="card">
     <div class="deck-header">
       <div>
-        <h2 class="section-title">{{ deck?.name || '牌组详情' }}</h2>
-        <div class="muted">{{ deck?.description || '查看该牌组的题目清单' }}</div>
+        <h2 class="section-title">{{ deck?.name || '专题详情' }}</h2>
+        <div class="muted">{{ deck?.description || '查看该专题的题目清单' }}</div>
       </div>
       <div class="deck-actions">
         <button class="btn ghost" type="button" @click="handleExport">导出</button>

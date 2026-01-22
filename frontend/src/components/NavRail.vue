@@ -20,7 +20,7 @@
 
     <div class="nav-footer">
       <button class="btn primary" type="button">
-        <span>新建牌组</span>
+        <span>新建专题</span>
       </button>
       <div class="pill">
         <span>数据目录</span>

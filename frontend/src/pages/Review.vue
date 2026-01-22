@@ -7,7 +7,7 @@
       </div>
       <div class="review-actions">
         <select v-model="selectedDeckId">
-          <option value="">全部牌组</option>
+          <option value="">全部专题</option>
           <option v-for="deck in decks" :key="deck.deckId" :value="deck.deckId">
             {{ deck.name }}
           </option>
@@ -24,7 +24,7 @@
   <section v-if="error" class="alert">{{ error }}</section>
 
   <section v-if="!session && !loadingSession" class="card soft">
-    选择牌组并点击“开始会话”以生成今日复习列表。
+    选择专题并点击“开始会话”以生成今日复习列表。
   </section>
 
   <section v-if="session && currentItem" class="grid cols-2">
@@ -293,7 +293,7 @@ const loadDecks = async () => {
   try {
     decks.value = await listDecks()
   } catch (err) {
-    error.value = err instanceof Error ? err.message : '加载牌组失败'
+    error.value = err instanceof Error ? err.message : '加载专题失败'
   }
 }
 

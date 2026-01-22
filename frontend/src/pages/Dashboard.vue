@@ -112,7 +112,7 @@ const syncing = ref(false)
 
 const actions = [
   { label: '开始复习会话', note: '进入复习', to: '/review' },
-  { label: '查看题库', note: '管理牌组', to: '/decks' },
+  { label: '查看题库', note: '管理专题', to: '/decks' },
   { label: '调整参数', note: 'SRS 配置', to: '/settings' },
 ]
 
@@ -141,7 +141,7 @@ const focusItems = computed(() => {
       return {
         itemId: item.itemId,
         prompt: stripMarkdown(item.prompt, 60) || '未填写题干',
-        deckName: deckMap.value.get(item.deckId) || '未命名牌组',
+        deckName: deckMap.value.get(item.deckId) || '未命名专题',
         dueLabel,
         dueDate: wrongDue ?? due ?? new Date(8640000000000000),
       }

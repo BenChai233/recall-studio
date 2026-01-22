@@ -6,7 +6,7 @@
           <RouterLink class="link" to="/decks">题库</RouterLink>
           <span class="muted">/</span>
           <RouterLink v-if="deckId" class="link" :to="`/decks/${deckId}`">
-            牌组
+            专题
           </RouterLink>
           <span class="muted">/</span>
           <span>题目详情</span>
@@ -19,7 +19,7 @@
           撤回最近一次复习
         </button>
         <RouterLink v-if="deckId" class="btn ghost" :to="`/decks/${deckId}`">
-          返回牌组
+          返回专题
         </RouterLink>
       </div>
     </div>
@@ -58,7 +58,7 @@
         <div class="mono">{{ item.itemId }}</div>
       </div>
       <div>
-        <div class="muted">所属牌组</div>
+        <div class="muted">所属专题</div>
         <div class="mono">{{ item.deckId }}</div>
       </div>
       <div>

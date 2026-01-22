@@ -1,9 +1,14 @@
 package com.recallstudio.domain;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+@Getter
+@Setter
 public class Settings {
     private int dailyLimit;
     private double newRatio;
@@ -23,45 +28,5 @@ public class Settings {
         settings.srsAlgo = "SM2_SIMPLE";
         settings.wrongReviewSchedule = List.of(1, 3, 7);
         return settings;
-    }
-
-    public int getDailyLimit() {
-        return dailyLimit;
-    }
-
-    public void setDailyLimit(int dailyLimit) {
-        this.dailyLimit = dailyLimit;
-    }
-
-    public double getNewRatio() {
-        return newRatio;
-    }
-
-    public void setNewRatio(double newRatio) {
-        this.newRatio = newRatio;
-    }
-
-    public Map<String, String> getScoreMap() {
-        return scoreMap;
-    }
-
-    public void setScoreMap(Map<String, String> scoreMap) {
-        this.scoreMap = scoreMap;
-    }
-
-    public String getSrsAlgo() {
-        return srsAlgo;
-    }
-
-    public void setSrsAlgo(String srsAlgo) {
-        this.srsAlgo = srsAlgo;
-    }
-
-    public List<Integer> getWrongReviewSchedule() {
-        return wrongReviewSchedule;
-    }
-
-    public void setWrongReviewSchedule(List<Integer> wrongReviewSchedule) {
-        this.wrongReviewSchedule = wrongReviewSchedule;
     }
 }
