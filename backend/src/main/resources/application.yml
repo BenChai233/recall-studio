@@ -1,0 +1,6 @@
+server:
+  port: 8080
+
+app:
+  configDir: ".recall-studio"
+  dataDir: "../database"
