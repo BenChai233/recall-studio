@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <section class="grid cols-3">
     <div class="card">
       <h3 class="card-title">题目总量</h3>
@@ -50,7 +50,7 @@
       暂无错题记录，完成复习后会自动统计。
     </div>
     <div v-else class="bars">
-      <div v-for="stat in reasonDistribution.stats" :key="stat.tag" class="bar-row">
+      <div v-for="stat in reasonStats" :key="stat.tag" class="bar-row">
         <span>{{ stat.tag }}</span>
         <div class="bar">
           <div class="bar-fill" :style="{ width: reasonPercent(stat.count) + '%' }"></div>
@@ -79,6 +79,7 @@ const items = ref<Item[]>([])
 const error = ref('')
 const reasonDistribution = ref<ReasonDistribution | null>(null)
 const reasonError = ref('')
+const reasonTags = ['记忆失败', '理解偏差', '细节遗漏', '边界不清', '表达不清', '其他']
 
 const totalItems = computed(() => items.value.filter((item) => !item.archived).length)
 
@@ -117,6 +118,12 @@ const reasonPercent = (count: number) => {
   if (total === 0) return 0
   return Math.round((count / total) * 100)
 }
+
+const reasonStats = computed(() => {
+  const stats = reasonDistribution.value?.stats ?? []
+  const map = new Map(stats.map((stat) => [stat.tag, stat.count]))
+  return reasonTags.map((tag) => ({ tag, count: map.get(tag) ?? 0 }))
+})
 
 const load = async () => {
   error.value = ''

@@ -166,7 +166,7 @@ const submitting = ref(false)
 const editableQuestions = ref<string[]>([])
 const pendingScore = ref<number | null>(null)
 
-const reasonOptions = ['概念', '机制', '边界', '工程实践']
+const reasonOptions = ['记忆失败', '理解偏差', '细节遗漏', '边界不清', '表达不清', '其他']
 
 const currentItem = computed(() => {
   if (!session.value) return null
